@@ -31,8 +31,9 @@ if st.button("Generate HTML Presentation", type="primary"):
             os.environ["GEMINI_API_KEY"] = gemini_api_key
 
             # --- Native CrewAI LLM Initialization ---
+            # Forcing the "-latest" tag to bypass the 404 error
             llm = LLM(
-                model="gemini/gemini-1.5-pro"
+                model="gemini/gemini-1.5-pro-latest"
             )
 
             # --- Define Agents ---
@@ -129,7 +130,7 @@ if st.button("Generate HTML Presentation", type="primary"):
                 process=Process.sequential 
             )
 
-            # --- The Brutal Execution Block ---
+            # --- Execution Block ---
             try:
                 result = presentation_crew.kickoff(inputs={'topic': user_topic})
 
@@ -157,7 +158,6 @@ if st.button("Generate HTML Presentation", type="primary"):
                 )
 
             except Exception as e:
-                # Bypassing Streamlit's redaction to expose the raw API error
                 st.error("Google's API hard-rejected the request. Read the exact failure below:")
                 st.code(str(e))
-                st.warning("If the code above says 'API_KEY_INVALID' or '400 Bad Request', the API key you pasted is dead or copied incorrectly. Go to Google AI Studio, generate a brand new key, and try again.")
+                st.warning("Check the logs above.")
