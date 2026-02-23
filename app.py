@@ -2,8 +2,7 @@ import streamlit as st
 import os
 import json
 from crewai import Agent, Task, Crew, Process
-from langchain_community.tools import DuckDuckGoSearchRun
-from langchain_google_genai import ChatGoogleGenerativeAI # Switched to Gemini
+from langchain_google_genai import ChatGoogleGenerativeAI 
 
 # --- Streamlit UI Config ---
 st.set_page_config(page_title="AI Presentation Builder", page_icon="⚡", layout="centered")
@@ -15,7 +14,6 @@ st.write("Enter a topic below. Our Gemini-powered AI crew will research, write, 
 with st.sidebar:
     st.header("⚙️ Configuration")
     gemini_api_key = st.text_input("Enter Google Gemini API Key", type="password")
-    st.write("*Your key is not stored and is only used for this session. Get your free key at Google AI Studio.*")
 
 # --- Streamlit UI: Main Input ---
 user_topic = st.text_input("What is the presentation about?", placeholder="e.g., AI in Stock Trading, Sustainable Agriculture...")
@@ -24,25 +22,21 @@ user_topic = st.text_input("What is the presentation about?", placeholder="e.g.,
 if st.button("Generate HTML Presentation", type="primary"):
     
     if not gemini_api_key:
-        st.error("Please enter your Gemini API Key in the sidebar.")
+        st.error("Enter your Gemini API Key in the sidebar.")
     elif not user_topic:
-        st.error("Please enter a presentation topic.")
+        st.error("Enter a presentation topic.")
     else:
-        with st.spinner(f"Gemini agents are researching and building '{user_topic}'... This takes about 30-60 seconds."):
+        with st.spinner(f"Gemini agents are building '{user_topic}'..."):
             
-            # Setup API and Gemini LLM
             os.environ["GOOGLE_API_KEY"] = gemini_api_key
-            # Using Gemini 1.5 Pro for complex reasoning and strict JSON adherence
             llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro") 
-            search_tool = DuckDuckGoSearchRun()
 
             # --- Define Agents ---
             researcher = Agent(
                 role='Senior Industry Researcher',
-                goal='Discover 2 real-world company case studies and hard metrics regarding: {topic}',
-                backstory='You find real-world company examples and quantifiable data. You do not write fluff.',
+                goal='Identify 2 real-world company case studies and hard metrics regarding: {topic}',
+                backstory='You rely on your vast internal knowledge to recall real-world company examples and quantifiable data. You do not write fluff.',
                 allow_delegation=False,
-                tools=[search_tool],
                 llm=llm
             )
 
@@ -75,7 +69,7 @@ if st.button("Generate HTML Presentation", type="primary"):
 
             # --- Define Tasks ---
             research_task = Task(
-                description='Search the web for 2 distinct real-world companies applying innovations in: {topic}. Find specific metrics.',
+                description='Recall 2 distinct real-world companies applying innovations in: {topic}. Provide specific metrics.',
                 expected_output='A detailed research dossier with 2 companies and numeric metrics.',
                 agent=researcher
             )
@@ -135,7 +129,6 @@ if st.button("Generate HTML Presentation", type="primary"):
 
             # --- Process Output and Inject HTML ---
             try:
-                # Clean JSON string just in case the LLM adds markdown
                 clean_json_str = str(result.raw).strip()
                 if clean_json_str.startswith('```json'):
                     clean_json_str = clean_json_str[7:-3]
@@ -144,13 +137,11 @@ if st.button("Generate HTML Presentation", type="primary"):
                     
                 presentation_data = json.loads(clean_json_str)
                 
-                # Ensure the master_template.html is in the same directory
                 with open("master_template.html", "r", encoding="utf-8") as file:
                     html_template = file.read()
                     
                 final_html = html_template.format(**presentation_data)
                 
-                # --- Provide Download Button in UI ---
                 st.success("✅ Presentation built successfully!")
                 
                 st.download_button(
