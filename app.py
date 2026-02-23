@@ -4,10 +4,10 @@ import json
 from crewai import Agent, Task, Crew, Process, LLM
 
 # --- Streamlit UI Config ---
-st.set_page_config(page_title="AI Presentation Builder", page_icon="⚡", layout="centered")
+st.set_page_config(page_title="AI Presentation Builder", page_icon="⚡", layout="wide")
 
 st.title("⚡ Autonomous HTML Presentation Factory")
-st.write("Enter a topic below. Our AI crew will research, write, design, and code a dynamic HTML presentation for you.")
+st.write("Paste your raw notes, outline, or description below. The AI will structure it into a 10-12 slide presentation.")
 
 # --- Streamlit UI: Sidebar for Gemini API Key ---
 with st.sidebar:
@@ -15,123 +15,114 @@ with st.sidebar:
     gemini_api_key = st.text_input("Enter Google Gemini API Key", type="password")
 
 # --- Streamlit UI: Main Input ---
-user_topic = st.text_input("What is the presentation about?", placeholder="e.g., AI in Stock Trading, Sustainable Agriculture...")
+user_description = st.text_area("Paste presentation details here:", height=200, placeholder="Paste your raw thoughts, business plan, or research here...")
 
 # --- Trigger the Agentic Workflow ---
 if st.button("Generate HTML Presentation", type="primary"):
     
     if not gemini_api_key:
         st.error("Enter your Gemini API Key in the sidebar.")
-    elif not user_topic:
-        st.error("Enter a presentation topic.")
+    elif len(user_description) < 20:
+        st.error("Provide a longer description so the AI has enough context to build 10 slides.")
     else:
-        with st.spinner(f"Agents are building '{user_topic}'..."):
+        with st.spinner("Agents are structuring your 10-12 slide deck..."):
             
-            # --- Force Environment Variables ---
             os.environ["GEMINI_API_KEY"] = gemini_api_key
 
-            # --- Native CrewAI LLM Initialization ---
             llm = LLM(
                 model="gemini/gemini-2.5-flash"
             )
 
             # --- Define Agents ---
-            researcher = Agent(
-                role='Senior Industry Researcher',
-                goal='Identify 2 real-world company case studies and hard metrics regarding: {topic}',
-                backstory='You rely on your vast internal knowledge to recall real-world company examples and quantifiable data. You do not write fluff.',
+            strategist = Agent(
+                role='Content Strategist',
+                goal='Analyze the user input and outline a logical progression of exactly 10 to 12 presentation slides.',
+                backstory='You are a ruthless editor. You take unstructured thoughts and organize them into a powerful, multi-slide narrative arc.',
                 allow_delegation=False,
                 llm=llm
             )
 
             copywriter = Agent(
-                role='Executive Presentation Copywriter',
-                goal='Transform research into punchy, minimalist slide copy.',
-                backstory='You write short, impactful presentation bullet points based on the research provided.',
+                role='Executive Copywriter',
+                goal='Draft the specific bullet points for the 10-12 slides outlined by the strategist.',
+                backstory='You write punchy, minimalist slide copy. No long paragraphs. Only high-impact bullet points.',
                 allow_delegation=False,
                 llm=llm
             )
 
             art_director = Agent(
                 role='Creative Art Director',
-                goal='Determine the psychological color palette and visual animation theme based on the topic.',
-                backstory='''You analyze the topic and output exact CSS hex values. 
-                Select ONE animation theme from: "theme-grid", "theme-fluid", "theme-geo".
-                Select ONE transition style from: "transition-slide", "transition-fade", "transition-zoom".
-                Select ONE icon from: "icon-tech", "icon-health", "icon-finance", "icon-eco", "icon-industry", "icon-logistics", "icon-analytics", "icon-security", "icon-people", "icon-idea".''',
+                goal='Select a dark-mode CSS color palette based on the tone of the content.',
+                backstory='You output exact CSS hex values. Always use dark backgrounds (e.g., #111111) with vibrant accent colors.',
                 allow_delegation=False,
                 llm=llm
             )
 
             developer = Agent(
                 role='Front-End Data Engineer',
-                goal='Format the finalized copy and design choices into strict JSON data.',
-                backstory='You only output raw JSON. You take the team\'s work and map it exactly to the template schema. DO NOT wrap the output in markdown code blocks.',
+                goal='Compile the content and design into a strict, nested JSON format.',
+                backstory='You only output raw JSON. You must ensure the slides array contains exactly 10 to 12 slide objects.',
                 allow_delegation=False,
                 llm=llm
             )
 
             # --- Define Tasks ---
-            research_task = Task(
-                description='Recall 2 distinct real-world companies applying innovations in: {topic}. Provide specific metrics.',
-                expected_output='A detailed research dossier with 2 companies and numeric metrics.',
-                agent=researcher
+            strategy_task = Task(
+                description=f'Analyze this user input: "{user_description}". Create an outline for exactly 10 to 12 slides.',
+                expected_output='A numbered outline of 10-12 slides with a core concept for each.',
+                agent=strategist
             )
 
             writing_task = Task(
-                description='Using the research, write the content for the 5-slide presentation. Include a main title, a 2-point paradigm shift, and descriptions/metrics for the 2 companies.',
-                expected_output='Refined text document containing the presentation copy.',
+                description='Take the outline and write the final title and 3-4 bullet points for each of the 10-12 slides.',
+                expected_output='Text document containing the final copy for all slides.',
                 agent=copywriter
             )
 
             art_task = Task(
-                description='Based on the topic {topic}, select the appropriate CSS colors (bg_color, text_main_color, accent_color, grid_color), animation theme, transition style, and SVG icon class.',
-                expected_output='A list of CSS values and class names.',
+                description='Analyze the subject matter and define the CSS color variables: bg_color (dark), text_main_color (light), accent_color (vibrant), grid_color (faint overlay), animation_theme, transition_style.',
+                expected_output='A list of CSS values.',
                 agent=art_director
             )
 
             coding_task = Task(
-                description='''Map all content and design choices into this EXACT JSON format. Return ONLY valid JSON.
+                description='''Map all content and design choices into this EXACT JSON schema. Return ONLY valid JSON.
                 {
-                    "bg_color": "#...",
-                    "text_main_color": "#...",
-                    "accent_color": "#...",
-                    "grid_color": "rgba(..., 0.2)",
-                    "animation_theme": "...",
-                    "transition_style": "...",
-                    "topic_icon": "...",
-                    "main_title": "...",
-                    "author_1": "Ameya P",
-                    "author_2": "Rajeeb Mohammed",
-                    "slide_2_title": "...",
-                    "slide_2_point_1": "...",
-                    "slide_2_point_2": "...",
-                    "company_1_name": "...",
-                    "company_1_desc": "...",
-                    "company_1_metric_1": "...",
-                    "company_1_metric_2": "...",
-                    "company_2_name": "...",
-                    "company_2_desc": "...",
-                    "company_2_metric_1": "...",
-                    "company_2_metric_2": "...",
-                    "conclusion_title": "...",
-                    "conclusion_text": "..."
+                    "design": {
+                        "bg_color": "#...",
+                        "text_main_color": "#...",
+                        "accent_color": "#...",
+                        "grid_color": "rgba(..., 0.1)",
+                        "animation_theme": "theme-grid",
+                        "transition_style": "transition-fade"
+                    },
+                    "slides": [
+                        {
+                            "title": "Slide 1 Title",
+                            "content": ["Point 1", "Point 2", "Point 3"]
+                        },
+                        {
+                            "title": "Slide 2 Title",
+                            "content": ["Point 1", "Point 2"]
+                        }
+                    ]
                 }
+                Make absolutely sure the "slides" array has 10 to 12 objects.
                 ''',
-                expected_output='A valid JSON string matching the exact schema provided.',
+                expected_output='A valid JSON string matching the exact schema.',
                 agent=developer
             )
 
             # --- Run the Crew ---
             presentation_crew = Crew(
-                agents=[researcher, copywriter, art_director, developer],
-                tasks=[research_task, writing_task, art_task, coding_task],
+                agents=[strategist, copywriter, art_director, developer],
+                tasks=[strategy_task, writing_task, art_task, coding_task],
                 process=Process.sequential 
             )
 
             # --- Execution Block ---
             try:
-                result = presentation_crew.kickoff(inputs={'topic': user_topic})
+                result = presentation_crew.kickoff()
 
                 clean_json_str = str(result.raw).strip()
                 if clean_json_str.startswith('```json'):
@@ -141,20 +132,36 @@ if st.button("Generate HTML Presentation", type="primary"):
                     
                 presentation_data = json.loads(clean_json_str)
                 
+                # Build the dynamic HTML for the slides
+                slides_html = ""
+                for slide in presentation_data.get("slides", []):
+                    points_html = "".join([f"<li>{pt}</li>" for pt in slide.get("content", [])])
+                    slides_html += f"""
+                    <div class="slide">
+                        <div class="content-box">
+                            <h2>{slide.get('title', 'Untitled')}</h2>
+                            <ul>{points_html}</ul>
+                        </div>
+                    </div>
+                    """
+                
+                # Load template
                 with open("master_template.html", "r", encoding="utf-8") as file:
                     html_template = file.read()
                     
-                # The Fix: Safe string replacement that ignores CSS curly braces
+                # Inject Data
                 final_html = html_template
-                for key, value in presentation_data.items():
+                for key, value in presentation_data.get("design", {}).items():
                     final_html = final_html.replace(f"{{{key}}}", str(value))
+                    
+                final_html = final_html.replace("{presentation_slides}", slides_html)
                 
-                st.success("✅ Presentation built successfully!")
+                st.success(f"✅ Presentation built successfully! Generated {len(presentation_data.get('slides', []))} slides.")
                 
                 st.download_button(
                     label="⬇️ Download HTML Presentation",
                     data=final_html,
-                    file_name=f"Generated_{user_topic.replace(' ', '_').lower()}.html",
+                    file_name="Generated_Presentation.html",
                     mime="text/html",
                     type="primary"
                 )
