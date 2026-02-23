@@ -1,8 +1,6 @@
 import streamlit as st
-import os
 import json
-from crewai import Agent, Task, Crew, Process
-from langchain_google_genai import ChatGoogleGenerativeAI 
+from crewai import Agent, Task, Crew, Process, LLM
 
 # --- Streamlit UI Config ---
 st.set_page_config(page_title="AI Presentation Builder", page_icon="⚡", layout="centered")
@@ -28,8 +26,11 @@ if st.button("Generate HTML Presentation", type="primary"):
     else:
         with st.spinner(f"Gemini agents are building '{user_topic}'..."):
             
-            os.environ["GOOGLE_API_KEY"] = gemini_api_key
-            llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro") 
+            # --- Native CrewAI LLM Initialization ---
+            llm = LLM(
+                model="gemini/gemini-1.5-pro",
+                api_key=gemini_api_key
+            )
 
             # --- Define Agents ---
             researcher = Agent(
