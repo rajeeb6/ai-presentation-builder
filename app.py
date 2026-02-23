@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 import json
 from crewai import Agent, Task, Crew, Process, LLM
 
@@ -26,10 +27,13 @@ if st.button("Generate HTML Presentation", type="primary"):
     else:
         with st.spinner(f"Gemini agents are building '{user_topic}'..."):
             
+            # --- Force Environment Variables ---
+            os.environ["GEMINI_API_KEY"] = gemini_api_key
+            os.environ["GOOGLE_API_KEY"] = gemini_api_key
+
             # --- Native CrewAI LLM Initialization ---
             llm = LLM(
-                model="gemini/gemini-1.5-pro",
-                api_key=gemini_api_key
+                model="gemini/gemini-1.5-pro"
             )
 
             # --- Define Agents ---
