@@ -2,4 +2,4 @@ streamlit
 crewai
 langchain-google-genai
 langchain-community
-duckduckgo-search
+duckduckgo-search==5.3.1
