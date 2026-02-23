@@ -31,7 +31,6 @@ if st.button("Generate HTML Presentation", type="primary"):
             os.environ["GEMINI_API_KEY"] = gemini_api_key
 
             # --- Native CrewAI LLM Initialization ---
-            # Forcing the currently active 2.5 endpoint to bypass 404 deprecation errors
             llm = LLM(
                 model="gemini/gemini-2.5-flash"
             )
@@ -145,7 +144,10 @@ if st.button("Generate HTML Presentation", type="primary"):
                 with open("master_template.html", "r", encoding="utf-8") as file:
                     html_template = file.read()
                     
-                final_html = html_template.format(**presentation_data)
+                # The Fix: Safe string replacement that ignores CSS curly braces
+                final_html = html_template
+                for key, value in presentation_data.items():
+                    final_html = final_html.replace(f"{{{key}}}", str(value))
                 
                 st.success("✅ Presentation built successfully!")
                 
