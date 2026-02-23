@@ -7,7 +7,7 @@ from crewai import Agent, Task, Crew, Process, LLM
 st.set_page_config(page_title="AI Presentation Builder", page_icon="⚡", layout="centered")
 
 st.title("⚡ Autonomous HTML Presentation Factory")
-st.write("Enter a topic below. Our Gemini-powered AI crew will research, write, design, and code a dynamic HTML presentation for you.")
+st.write("Enter a topic below. Our AI crew will research, write, design, and code a dynamic HTML presentation for you.")
 
 # --- Streamlit UI: Sidebar for Gemini API Key ---
 with st.sidebar:
@@ -25,15 +25,15 @@ if st.button("Generate HTML Presentation", type="primary"):
     elif not user_topic:
         st.error("Enter a presentation topic.")
     else:
-        with st.spinner(f"Gemini agents are building '{user_topic}'..."):
+        with st.spinner(f"Agents are building '{user_topic}'..."):
             
             # --- Force Environment Variables ---
             os.environ["GEMINI_API_KEY"] = gemini_api_key
 
             # --- Native CrewAI LLM Initialization ---
-            # Forcing the "-latest" tag to bypass the 404 error
+            # Forcing the currently active 2.5 endpoint to bypass 404 deprecation errors
             llm = LLM(
-                model="gemini/gemini-1.5-pro-latest"
+                model="gemini/gemini-2.5-flash"
             )
 
             # --- Define Agents ---
@@ -158,6 +158,5 @@ if st.button("Generate HTML Presentation", type="primary"):
                 )
 
             except Exception as e:
-                st.error("Google's API hard-rejected the request. Read the exact failure below:")
+                st.error("Execution failed. Read the exact failure below:")
                 st.code(str(e))
-                st.warning("Check the logs above.")
