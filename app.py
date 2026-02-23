@@ -29,7 +29,6 @@ if st.button("Generate HTML Presentation", type="primary"):
             
             # --- Force Environment Variables ---
             os.environ["GEMINI_API_KEY"] = gemini_api_key
-            os.environ["GOOGLE_API_KEY"] = gemini_api_key
 
             # --- Native CrewAI LLM Initialization ---
             llm = LLM(
@@ -130,10 +129,10 @@ if st.button("Generate HTML Presentation", type="primary"):
                 process=Process.sequential 
             )
 
-            result = presentation_crew.kickoff(inputs={'topic': user_topic})
-
-            # --- Process Output and Inject HTML ---
+            # --- The Brutal Execution Block ---
             try:
+                result = presentation_crew.kickoff(inputs={'topic': user_topic})
+
                 clean_json_str = str(result.raw).strip()
                 if clean_json_str.startswith('```json'):
                     clean_json_str = clean_json_str[7:-3]
@@ -158,6 +157,7 @@ if st.button("Generate HTML Presentation", type="primary"):
                 )
 
             except Exception as e:
-                st.error(f"An error occurred while compiling the HTML: {e}")
-                with st.expander("View Raw Output (For debugging)"):
-                    st.write(result.raw)
+                # Bypassing Streamlit's redaction to expose the raw API error
+                st.error("Google's API hard-rejected the request. Read the exact failure below:")
+                st.code(str(e))
+                st.warning("If the code above says 'API_KEY_INVALID' or '400 Bad Request', the API key you pasted is dead or copied incorrectly. Go to Google AI Studio, generate a brand new key, and try again.")
